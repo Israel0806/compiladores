@@ -1,42 +1,5 @@
 tokenSeparator = ":="
 
-class TAS:
-##    terminals = []
-##    nonTerminals = []
-    tablaSintactica = {} # mapea NoTerminales vs Terminales => produccion
-##    def __init__(self):
-##        self.tablaSintactica["E"] = {}
-##        self.tablaSintactica["Ep"] = {}
-##        self.tablaSintactica["T"] = {}
-##        self.tablaSintactica["Tp"] = {}
-##        self.tablaSintactica["F"] = {}
-##
-##        self.tablaSintactica["E"]["("] = ["T", "Ep"]
-##        self.tablaSintactica["E"]["num"] = ["T", "Ep"]
-##        self.tablaSintactica["E"]["id"] = ["T", "Ep"]
-##        self.tablaSintactica["Ep"]["+"] = ["+","T", "Ep"]
-##        self.tablaSintactica["Ep"]["-"] = ["-","T", "Ep"]
-##        self.tablaSintactica["Ep"][")"] = ["lambda"]
-##        self.tablaSintactica["Ep"]["$"] = ["lambda"]
-##        self.tablaSintactica["T"]["("] = ["F", "Tp"]
-##        self.tablaSintactica["T"]["num"] = ["F", "Tp"]
-##        self.tablaSintactica["T"]["id"] = ["F", "Tp"]
-##        self.tablaSintactica["Tp"]["+"] = ["lambda"]
-##        self.tablaSintactica["Tp"]["-"] = ["lambda"]
-##        self.tablaSintactica["Tp"]["*"] = ["*", "F", "Tp"]
-##        self.tablaSintactica["Tp"]["/"] = ["/", "F", "Tp"]
-##        self.tablaSintactica["Tp"][")"] = ["lambda"]
-##        self.tablaSintactica["Tp"]["$"] = ["lambda"]
-##        self.tablaSintactica["F"]["("] = ["(E)"]
-##        self.tablaSintactica["F"]["num"] = ["num"]
-##        self.tablaSintactica["F"]["id"] = ["id"]
-    def print(self):
-        for nonTerminalKeys in tsp.tablaSintactica:
-            for terminalKeys in tsp.tablaSintactica[nonTerminalKeys]:
-                print( "[" + nonTerminalKeys + "][" + terminalKeys + "] : ", end = '')
-                print(' '.join(tsp.tablaSintactica[nonTerminalKeys][terminalKeys]))
-        
-        
 
 class Produccion:
     izq = "" #Componente de la izquierda
@@ -70,31 +33,33 @@ class Gramatica:
     def buscarProduccion(self, nodoNt, nodoT):
         nodos = []
         for proc in self.production:
-            if proc.izq == nodoNt and nodoT in self.getPrimero(nodoNt):
-            
-                for der in proc.der:
-                    nodos.append(der)
-        print("New table entry: ", end='')
-        print(nodos)
+            if proc.izq == nodoNt:
+                if proc.der[0] == nodoT or proc.der[0] in self.nonTerminals:
+                    for der in proc.der:
+                        nodos.append(der)
+        # print("New table entry: ", end='')
+        # print(nodos)
         return nodos
             
             
     
     ##        self.tablaSintactica["F"] = {}
-    ##
     ##        self.tablaSintactica["E"]["("] = ["T", "Ep"]
     def crearTabla(self):
         self.tas = {}
         for nodoNT in self.nonTerminals:
             for nodoT in self.getPrimero(nodoNT):
                 if nodoT != "lambda":
-                    print("construct " + nodoNT + " with: " + nodoT)
-                    self.tas[nodoNT] = {}
+                    # print("construct " + nodoNT + " with: " + nodoT)
+                    if self.tas.get(nodoNT) == None:
+                        self.tas[nodoNT] = {}
                     self.tas[nodoNT][ nodoT ] = self.buscarProduccion( nodoNT, nodoT)
                 else:
                     for nodoT2 in self.getSiguiente(nodoNT):
-                        self.tas[nodoNT] = {}
+                        if self.tas.get(nodoNT) == None:
+                            self.tas[nodoNT] = {}
                         self.tas[nodoNT][nodoT2] = ["lambda"]
+            print()
                 # self.tas[?][?] = ? depende de su implementación
 
     def printTabla(self):
