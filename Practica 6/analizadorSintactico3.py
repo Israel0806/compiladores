@@ -12,6 +12,8 @@ class Produccion:
         self.izq = tmp[0].strip()
         self.der = tmp[1].strip().split(" ")
         for token in self.der:
+            if token == '':
+                self.der.remove('')
             token = token.strip()
         
         
@@ -59,7 +61,7 @@ class Gramatica:
                         if self.tas.get(nodoNT) == None:
                             self.tas[nodoNT] = {}
                         self.tas[nodoNT][nodoT2] = ["lambda"]
-            print()
+            
                 # self.tas[?][?] = ? depende de su implementación
 
     def printTabla(self):
@@ -67,7 +69,7 @@ class Gramatica:
             for terminalKeys in self.tas[nonTerminalKeys]:
                 print( "[" + nonTerminalKeys + "][" + terminalKeys + "] : ", end = '')
                 print(' '.join(self.tas[nonTerminalKeys][terminalKeys]))
-
+            print()
 
     def cargar(self, filename):
         #cargar un texto en gramatica
@@ -91,13 +93,14 @@ class Gramatica:
                 if (not (der in self.terminals) and not (der in self.nonTerminals)) or der == "lambda": 
                     self.terminals.append(der)
 
-##        self.terminals = list( dict.fromkeys(self.terminals) )
-##        self.nonTerminals = list( dict.fromkeys(self.nonTerminals) )
+        self.terminals = list( dict.fromkeys(self.terminals) )
+        self.nonTerminals = list( dict.fromkeys(self.nonTerminals) )
             
             
     def getPrimeros (self):
         for nodo in self.nonTerminals:
             self.primeros[nodo] = self.getPrimero(nodo)
+            self.primeros[nodo] = list( dict.fromkeys(self.primeros[nodo]))
         return self.primeros
     
     def getPrimero (self, nodo ):
@@ -107,6 +110,7 @@ class Gramatica:
         for proc in self.production:
             if proc.izq == nodo:
                 node = proc.der[0]
+                
                 #Si es nodo terminal, guardarlo como un primero
                 if node in self.terminals:
                     prim.append(node)
@@ -116,45 +120,69 @@ class Gramatica:
                         prim.extend(self.primeros[node])
                     else:
                         prim.extend(self.getPrimero(node))
-                     
+                    rep = True
+                    it = 0
+                    while rep:
+                        if "lambda" in self.getPrimero(proc.der[it]):
+                            if it + 1 == len(proc.der):
+                                prim.append("lambda")
+                            else:
+                                # print(prim)
+                                # print("extended: " + proc.der[it] + " " + proc.der[it + 1])
+                                if proc.der[it + 1] in self.terminals:
+                                    prim.append(proc.der[it + 1])
+                                else:
+                                    prim.extend(self.getPrimero(proc.der[it + 1]))
+                                # print(prim)
+                                # print()  
+                                it = it + 1
+                        else :
+                            break
+
+        # prim =  list( dict.fromkeys(prim) )
+
+     
         return prim
         # retornar todos los no-terminales primeros.
     
     def getSiguiente(self, node): 
+        # print(node)
         siguientes = []
-        # print("FOR NODE: " + node)
         for produc in self.production:
+            if not node in produc.der:
+                continue
             for index in range(len(produc.der)):
                 currentNode = produc.der[index]
-                if node != currentNode:
+                if node != currentNode or currentNode in self.terminals:
                     continue
-                # print(produc.izq, end =" := ")
-                # print(produc.der)
 
-                # print("CurrentNode: " + currentNode)
-                if currentNode in self.terminals:
-                    continue
                 # Si es que no existiera un nodo a la derecha, su siguiente
                 # será el siguiente del lado izquierdo de su producción original
                 if index == len(produc.der) - 1:
-                    # print("last pos")
                     siguientes.extend(self.siguientes[produc.izq])
-                    # print(siguientes)
+                    # siguientes.extend(self.getSiguiente(produc.izq))
                 else:    
                     nextNode = produc.der[index + 1]
-                    # print("nextNode: " + nextNode)
                     if nextNode in self.terminals:
-                        # print("next is terminal")
+                        # if node == "iniVideo":
+                            # print(produc.der)
+                            # print("Terminal:" + produc.der[index + 1])
                         siguientes.append(nextNode)
                         continue
+
                     # El siguiente de un nodo, es el primero del nodo de su derecha
-                    # print("add primeros")
+                    # if node == "iniVideo":
+                    
+                    # print(node + " aqui")
                     siguientes.extend(self.primeros[nextNode])
-                    siguientes.remove("lambda")
+                    # siguientes.remove("lambda")
+
                     # Si uno de los primeros incluye lambda
-                    if produc.izq in self.siguientes  and "lambda" in self.primeros[produc.izq]:
+                    # if produc.izq in self.siguientes  and "lambda" in self.primeros[produc.izq]:
+                    if "lambda" in self.primeros[nextNode]:
                         # print("add when lambda")
-                        siguientes.extend(self.siguientes[produc.izq])
+                        # siguientes.extend(self.siguientes[produc.izq])
+                        siguientes.extend(self.getSiguiente(nextNode))
                         
         return siguientes
 
@@ -191,6 +219,7 @@ class Gramatica:
 
 gram = Gramatica()
 gram.cargar("gramatica.txt")
+
 gram.getPrimeros()
 print()
 print("primeros")
@@ -207,6 +236,7 @@ for sig in gram.siguientes:
     print(sig, end =": ")
     print(gram.siguientes[sig])
 
+print()
 print("Tabla sintactica:")
 gram.crearTabla()
 gram.printTabla()
